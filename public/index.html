@@ -1,0 +1,99 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lucifer Dark Room</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+  <style>
+    body {
+      background: black;
+      color: #00ff00;
+      font-family: monospace;
+      padding: 20px;
+    }
+    #chat {
+      height: 400px;
+      overflow-y: scroll;
+      border: 1px solid #00ff00;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #message {
+      width: 70%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lucifer Dark Room</h1>
+
+  <div id="login">
+    <input type="password" id="password" placeholder="Enter Password" />
+    <button onclick="checkPassword()">Enter</button>
+  </div>
+
+  <div id="userInput" style="display:none">
+    <input id="username" placeholder="Enter your name" />
+    <input id="room" placeholder="Enter room name" />
+    <button onclick="joinRoom()">Join Room</button>
+  </div>
+
+  <div id="chatBox" style="display:none">
+    <div id="chat"></div>
+    <input id="message" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <audio id="joinSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    let username = "";
+    let room = "";
+
+    function checkPassword() {
+      const pass = document.getElementById("password").value;
+      if (pass === "Lucifer19") {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("userInput").style.display = "block";
+      } else {
+        alert("Wrong password!");
+      }
+    }
+
+    function joinRoom() {
+      username = document.getElementById("username").value;
+      room = document.getElementById("room").value;
+      if (!username || !room) return alert("Fill all fields");
+
+      document.getElementById("userInput").style.display = "none";
+      document.getElementById("chatBox").style.display = "block";
+
+      socket.emit("joinRoom", { username, room });
+      document.getElementById("joinSound").play();
+    }
+
+    socket.on("notification", msg => {
+      const el = document.createElement("div");
+      el.textContent = "[NOTIFY] " + msg;
+      document.getElementById("chat").appendChild(el);
+    });
+
+    function sendMessage() {
+      const msg = document.getElementById("message").value;
+      if (msg) {
+        socket.emit("chatMessage", { message: msg, username, room });
+        document.getElementById("message").value = "";
+      }
+    }
+
+    socket.on("chatMessage", ({ message, username }) => {
+      const el = document.createElement("div");
+      el.textContent = `${username}: ${message}`;
+      document.getElementById("chat").appendChild(el);
+    });
+  </script>
+</body>
+</html>
